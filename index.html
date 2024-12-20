@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resizable Code Editor with Highlighting</title>
+  
+  <!-- CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
+	<link rel="stylesheet" href="/styles.css">
+
+  <style></style>
+</head>
+<body>
+	<h1>LayoutCSS <button id="url">URL</button></h1>
+  
+  <div id="split-container">
+    <div id="editor-container">
+      <textarea id="editor" name="code">
+<h4>Sakyt</h4>
+      </textarea>
+    </div>
+    
+    <div id="resizer"></div>
+    
+    <div id="output-container">
+ 			<!-- Transparent overlay -->
+      <div id="iframe-overlay"></div>
+      <iframe id="output"></iframe>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/css/css.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@emmetio/codemirror-plugin@1.2.4/dist/browser.min.js"></script>
+  
+  <script type="module">
+		 import init, { add } from './layoutcsswasm/pkg/layoutcsswasm.js'; 
+
+		 async function generateCSS(code) {
+    	await init(); // This initializes the wasm module
+			const result = add(code);
+			return result
+  	}
+
+    const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+      mode: 'htmlmixed', // Ensures HTML + embedded JS and CSS are highlighted
+      theme: 'dracula',  // Theme for styling
+      lineNumbers: true,
+			extraKeys: {
+        'Tab': 'emmetExpandAbbreviation',
+        'Esc': 'emmetResetAbbreviation',
+        'Enter': 'emmetInsertLineBreak'
+    	}
+    });
+
+    async function updateOutput() {
+      const code = editor.getValue();
+      const iframe = document.getElementById('output');
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+			let layoutStyle = await generateCSS(code)
+      iframeDoc.open();
+			iframeDoc.write(`<style>${layoutStyle}</style>` + code);
+      iframeDoc.close();
+    }
+
+
+window.onload = (event) => {
+	loadCodeFromUrl();
+	updateOutput();
+	editor.on('change', updateOutput);
+	console.log("La page est complètement chargée");
+};
+
+    const resizer = document.getElementById('resizer');
+    const editorContainer = document.getElementById('editor-container');
+    const splitContainer = document.getElementById('split-container');
+    const iframeOverlay = document.getElementById('iframe-overlay');
+    let isResizing = false;
+
+    // Mouse down on the resizer
+    resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      iframeOverlay.style.display = 'block'; // Show the overlay during resizing
+    });
+
+    // Mouse move to resize
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const containerRect = splitContainer.getBoundingClientRect();
+      const newWidth = e.clientX - containerRect.left;
+
+      const minWidth = containerRect.width * 0.2; // 20%
+      const maxWidth = containerRect.width * 0.8; // 80%
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        editorContainer.style.width = `${newWidth}px`;
+      }
+    });
+
+    // Mouse up to stop resizing
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = '';
+        iframeOverlay.style.display = 'none'; // Hide the overlay when done
+      }
+    });
+
+		document.getElementById('url').addEventListener('click', generateShareableLink);
+		function generateShareableLink() {
+  const code = editor.getValue(); // Get the code from the editor
+  const encodedCode = encodeURIComponent(code); // URL encode the code
+
+  // Generate the URL with the encoded code as a query parameter
+  const shareableUrl = window.location.origin + window.location.pathname + "?code=" + encodedCode;
+
+  // Display the generated shareable link
+	console.log(shareableUrl)
+}
+
+function loadCodeFromUrl(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const encodedCode = urlParams.get('code');
+
+  if (encodedCode) {
+    const decodedCode = decodeURIComponent(encodedCode); // Decode the URL-encoded code
+    editor.setValue(decodedCode); // Set the code in the editor
+  }
+}
+
+  </script>
+</body>
+</html>
+

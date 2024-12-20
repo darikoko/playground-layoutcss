@@ -1,0 +1,75 @@
+    html, body {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0;
+      padding: 10px;
+      background-color: #333;
+      color: #fff;
+    }
+
+    #split-container {
+      flex: 1;
+      display: flex;
+      height: calc(100% - 40px); /* Account for header height */
+    }
+
+    #editor-container {
+      display: flex;
+      flex-direction: column;
+      width: 50%;
+      min-width: 20%;
+      max-width: 80%;
+      position: relative;
+      z-index: 2; /* Ensure editor appears above overlay */
+    }
+
+    .CodeMirror {
+      flex: 1;
+      height: 100%;
+      position: relative;
+			font-size:15px;
+      z-index: 2; /* Ensure CodeMirror has a higher z-index than the overlay */
+    }
+
+    #resizer {
+      width: 10px; /* Increased width for easier interaction */
+      cursor: ew-resize;
+      background-color: #ddd;
+      position: relative;
+      z-index: 1; /* Keep resizer below editor */
+    }
+
+    #output-container {
+      flex: 1;
+      background-color: #f9f9f9;
+      overflow: auto;
+      position: relative;
+      z-index: 0; /* Ensure output is below editor */
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Transparent overlay for iframe fix */
+    #iframe-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0); /* Fully transparent */
+      display: none; /* Hidden by default */
+      z-index: 10; /* Above iframe but below CodeMirror */
+    }
+
+  
